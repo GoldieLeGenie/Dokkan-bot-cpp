@@ -1,4 +1,5 @@
 # dokkanCPP
+-WORK STILL IN PROGRESS !-
 
 Unofficial C++ client to interact with Dokkan Battle's API.  
 
