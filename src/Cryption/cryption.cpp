@@ -116,23 +116,19 @@ std::string Cryption::mac(const std::string& method, const std::string& action, 
 std::string Cryption::encrypt_sign(const std::string& data) {
     std::string padded = pad(data);
 
-    // Clé brute complète codée en dur (doit faire 64 caractères → on tronque à 32 octets pour AES-256)
     std::string full_key_str = "iyMgxvi240Smc5oPikQugi0luUp8aQjcxMPO27n7CyPIIDZbfQbEgpWCYNHSTHB";
 
-    // On dérive la clé AES (32 octets) et IV (16 octets) comme en Python avec MD5
     unsigned char salt[8];
     RAND_bytes(salt, sizeof(salt));
 
     unsigned char key[32], iv[16];
-    get_key_and_iv(full_key_str, salt, key, iv); // Assure-toi que cette fonction existe et imite bien la version Python (EVP_BytesToKey avec MD5)
-
+    get_key_and_iv(full_key_str, salt, key, iv); 
     AES_KEY aes_key;
     AES_set_encrypt_key(key, 256, &aes_key);
 
     std::vector<unsigned char> enc_data(padded.size());
     AES_cbc_encrypt(reinterpret_cast<const unsigned char*>(padded.c_str()), enc_data.data(), padded.size(), &aes_key, iv, AES_ENCRYPT);
 
-    // Ajout du salt au début (comme en Python : salt + ciphertext)
     std::vector<unsigned char> full_data(salt, salt + 8);
     full_data.insert(full_data.end(), enc_data.begin(), enc_data.end());
 
@@ -143,16 +139,14 @@ std::string Cryption::encrypt_sign(const std::string& data) {
 std::string Cryption::decrypt_sign(const std::string& sign) {
     std::vector<unsigned char> buffer = base64_decode_binary(sign);
 
-    // Clé brute codée en dur (identique à celle de encrypt_sign)
     std::string full_key_str = "iyMgxvi240Smc5oPikQugi0luUp8aQjcxMPO27n7CyPIIDZbfQbEgpWCYNHSTHB";
 
-    // Extraction du salt et des données chiffrées
     const unsigned char* salt = buffer.data();
     const unsigned char* data = buffer.data() + 8;
     size_t data_len = buffer.size() - 8;
 
     unsigned char key[32], iv[16];
-    get_key_and_iv(full_key_str, salt, key, iv);  // même dérivation que encrypt_sign
+    get_key_and_iv(full_key_str, salt, key, iv); 
 
     AES_KEY aes_key;
     AES_set_decrypt_key(key, 256, &aes_key);
@@ -161,7 +155,7 @@ std::string Cryption::decrypt_sign(const std::string& sign) {
     AES_cbc_encrypt(data, dec_data.data(), data_len, &aes_key, iv, AES_DECRYPT);
 
     std::string decrypted(reinterpret_cast<char*>(dec_data.data()), dec_data.size());
-    decrypted = unpad(decrypted);  // retire les bytes de padding PKCS#7
+    decrypted = unpad(decrypted); 
     return decrypted;
 }
 
